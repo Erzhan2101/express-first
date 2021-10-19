@@ -203,18 +203,36 @@
 // })
 
 
-
-
-
 // / дубликат сервера для mongoDB
 const express = require('express')
-const taskRouter = require("./routes/tasksRoute")
+const taskRouter = require("./routes/tasksRouter")
+const chalk = require("chalk")
+const mongoose = require("mongoose")
 
+require("dotenv").config()
+
+// создание сервера
 const server = express()
+
+//библтотека для подключение mongoDB
+mongoose.connect(process.env.MONGO_URL)
+    .then(() => console.log(chalk.blue("DB IS CONNECTED")))
+    .catch(() => console.log(chalk.red("DB NOT CONNECTED")))
+
+// оброботка данных в req.body
 server.use(express.json())
 
+// роуты ,  которые начинаются с /api/tasks
 server.use("/api/tasks", taskRouter)
 
+// если ни один роут не подошел то выводим 404
+server.use((req, res, next) => {
+    const error = {message: "Not Fount"}
+    res.status(404).json(error)
+    next()
+})
+
+// запуск сервера
 server.listen(process.env.PORT || 8000, () => {
     console.log('Server is running')
 })
