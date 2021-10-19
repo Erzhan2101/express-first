@@ -208,90 +208,12 @@
 
 // / дубликат сервера для mongoDB
 const express = require('express')
-const fs = require('fs')
+const taskRouter = require("./routes/tasksRoute")
 
 const server = express()
-const {nanoid} = require("nanoid")
 server.use(express.json())
 
-const readData = () => {
-    try {
-        return JSON.parse(fs.readFileSync(`./tasks/sport.json`, 'utf8'))
-    } catch (e) {
-        return []
-    }
-}
-
-// get запрос
-server.get('/api/tasks', (req, res) => {
-    const data = readData() // читаем файл
-    const filteredData = data
-        .filter(item => !item._isDeleted === false) // возвращят не удаленные
-        .map(item => {
-            return {
-                id: item.taskId,
-                title: item.title,
-                status: item.status,
-            }
-        })
-    res.json(filteredData)
-})
-
-server.get('/api/tasks/:timespan', (req, res) => {
-    const data = readData()
-    const timeSpan = {
-        'day': 1000 * 60 * 60 * 24,
-        'week': 1000 * 60 * 60 * 24 * 7,
-        'month': 1000 * 60 * 60 * 24 * 30
-    }
-    const filteredData = data.filter(item => +new Date() - item._createdAt < timeSpan[req.params.timespan])
-        .map(el => {
-            return {
-                id: el.taskId,
-                title: el.title,
-                status: el.status
-            }
-        })
-    res.json(filteredData)
-})
-
-// post запрос
-
-server.post("/api/tasks", (req, res) => {
-    const newTask = {
-        "taskId": nanoid(5),
-        "title": req.body.title,
-        "_isDeleted": false,
-        "_createdAt": +new Date(),
-        "_deleteAt": null,
-        "status": "new"
-    }
-    const data = readData()
-    const updatedTasks = [...data, newTask]
-    fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updatedTasks, null, 2))
-    res.json({newTask})
-})
-
-// delete запрос
-server.delete("/api/tasks/:id", (req, res) => {
-    const data = readData()
-    const updatedTasks = data.map(item => item.taskId === req.params.id ? {...item, _isDeleted: true} : item)
-    fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updatedTasks, null, 2))
-    res.json({updatedTasks})
-})
-
-//patch запрос
-server.patch('/api/tasks/:id', (req, res) => {
-    const statusOptions = ['done', 'new', 'in progress', 'blocked']
-    if (statusOptions.includes(req.body.status)) {
-        const data = readData()
-        const updateTask = data.map(el => el.taskId === req.params.id ? {...el, status: req.body.status} : el)
-        fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updateTask, null, 2))
-        res.json(updateTask)
-    } else {
-        res.status(501).json({"status": "error", "message": "incorrect status"})
-    }
-})
+server.use("/api/tasks", taskRouter)
 
 server.listen(process.env.PORT || 8000, () => {
     console.log('Server is running')
