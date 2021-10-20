@@ -220,24 +220,6 @@ mongoose.connect(process.env.MONGO_URL)
     .then(() => console.log(chalk.blue("DB IS CONNECTED")))
     .catch(() => console.log(chalk.red("DB NOT CONNECTED")))
 
-// Tasks.updateOne({_id: "616fda32d4e292b247441cfc"}, {_deletedAt: +new Date()})
-//     .exec((err, data) => {
-//         console.log(err)
-//         console.log(data)
-//     })
-// const newTask = new Tasks ({
-//     title: "проветка 2 !!!"
-// })
-// newTask.save()
-
-// первый вариант для получение
-// Tasks.find({}).exec((error, list) => {
-// console.log(list)
-// })
-
-//второй вариант для получение
-// Tasks.find({}).then((list) => console.log(list))
-
 // оброботка данных в req.body
 server.use(express.json())
 server.use(cors())
