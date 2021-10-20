@@ -15,7 +15,7 @@ const getAllTasks = (req, res) => {
         .filter(item => !item._isDeleted === false) // возвращят не удаленные
         .map(item => {
             return {
-                id: item.taskId,
+                _id: item._id,
                 title: item.title,
                 status: item.status,
             }
@@ -24,7 +24,7 @@ const getAllTasks = (req, res) => {
 }
 const getByTime = (req, res) => {
     const data = readData()
-    const timeSpan = {
+    const timeSpan = { // дает знать когда была создана или удаленна обект
         'day': 1000 * 60 * 60 * 24,
         'week': 1000 * 60 * 60 * 24 * 7,
         'month': 1000 * 60 * 60 * 24 * 30
@@ -40,8 +40,7 @@ const getByTime = (req, res) => {
     res.json(filteredData)
 }
 const addTask = (req, res) => {
-    const newTask = {
-        "taskId": nanoid(5),
+    const newTask = { // создаем новый обект при post запросе
         "title": req.body.title,
         "_isDeleted": false,
         "_createdAt": +new Date(),
