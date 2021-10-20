@@ -1,7 +1,7 @@
 const express = require("express")
 const {getAllTasks,getByTime,addTask,deleteTask,updateTask} = require("../controliers/tasks");
 const router = express.Router()
-
+// оброботчики
 // get запрос
 router.get('/', getAllTasks)
 router.get('/:timespan', getByTime)
