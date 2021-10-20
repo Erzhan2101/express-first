@@ -1,16 +1,7 @@
-const {nanoid} = require("nanoid")
-const fs = require('fs')
+const Tasks = require("../models/taskModel")
 
-const readData = () => {
-    try {
-        return JSON.parse(fs.readFileSync(`./tasks/sport.json`, 'utf8'))
-    } catch (e) {
-        return []
-    }
-}
-
-const getAllTasks = (req, res) => {
-    const data = readData() // читаем файл
+const getAllTasks = async (req, res) => {
+    const data = await Tasks.find({})// читаем файл
     const filteredData = data
         .filter(item => !item._isDeleted === false) // возвращят не удаленные
         .map(item => {
@@ -22,54 +13,67 @@ const getAllTasks = (req, res) => {
         })
     res.json(filteredData)
 }
-const getByTime = (req, res) => {
-    const data = readData()
+const getByTime = async (req, res) => {
+    const data = await Tasks.find({})
     const timeSpan = { // дает знать когда была создана или удаленна обект
         'day': 1000 * 60 * 60 * 24,
         'week': 1000 * 60 * 60 * 24 * 7,
         'month': 1000 * 60 * 60 * 24 * 30
     }
-    const filteredData = data.filter(item => +new Date() - item._createdAt < timeSpan[req.params.timespan])
-        .map(el => {
+    const filteredData = data.filter(item => +new Date() - item._createdAt < timeSpan[req.params.timespan]).map(el => {
             return {
-                id: el.taskId,
+                _id: el._id,
                 title: el.title,
                 status: el.status
             }
         })
     res.json(filteredData)
 }
-const addTask = (req, res) => {
-    const newTask = { // создаем новый обект при post запросе
-        "title": req.body.title,
-        "_isDeleted": false,
-        "_createdAt": +new Date(),
-        "_deleteAt": null,
-        "status": "new"
+const addTask = async (req, res) => {
+    try {
+        const newTask = new Tasks({
+            title: req.body.title
+            //остальное вазмет по дефолту
+        })
+        // const newTask = { // создаем новый обект при post запросе
+        //     "title": req.body.title,
+        //     "_isDeleted": false,
+        //     "_createdAt": +new Date(),
+        //     "_deleteAt": null,
+        //     "status": "new"
+        // }
+        // const data = readData()
+        // const updatedTasks = [...data, newTask]
+        // fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updatedTasks, null, 2))
+        const saveTask = await newTask.save()
+        res.json(saveTask)
+    } catch (e) {
+        res.status(401).json({message: "ошибка сохранение"})
     }
-    const data = readData()
-    const updatedTasks = [...data, newTask]
-    fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updatedTasks, null, 2))
-    res.json({newTask})
 }
-const deleteTask = (req, res) => {
-    const data = readData()
-    const updatedTasks = data.map(item => item.taskId === req.params.id ? {...item, _isDeleted: true} : item)
-    fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updatedTasks, null, 2))
-    res.json({updatedTasks})
+const deleteTask = async (req, res) => {
+    try{
+        const updateTask = await Tasks.findByIdAndUpdate(
+            {_id: req.params.id},
+            {_isDeleted: true, _deletedAt: +new Date()},
+            {new: true})
+        res.json(updateTask)
+    } catch (e) {
+        res.json({message: "ошибка id"})
+    }
 }
-const updateTask = (req, res) => {
+const updateTask = async (req, res) => {
+    const id = req.params.id
+    const status = req.body.status
     const statusOptions = ['done', 'new', 'in progress', 'blocked']
     if (statusOptions.includes(req.body.status)) {
-        const data = readData()
-        const updateTask = data.map(el => el.taskId === req.params.id ? {...el, status: req.body.status} : el)
-        fs.writeFileSync(`./tasks/sport.json`, JSON.stringify(updateTask, null, 2))
-        res.json(updateTask)
+        const updateStatusTask = await Tasks.findOneAndUpdate({_id: id}, {status: status}, {new: true})
+        res.json(updateStatusTask)
     } else {
         res.status(501).json({"status": "error", "message": "incorrect status"})
     }
 }
 
 module.exports = {
-    getAllTasks,getByTime,addTask,deleteTask,updateTask
+    getAllTasks, getByTime, addTask, deleteTask, updateTask
 }
